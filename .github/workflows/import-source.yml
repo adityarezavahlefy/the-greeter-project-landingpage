@@ -1,0 +1,28 @@
+name: import-source
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch source archive
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -fsSL -o /tmp/src.zip https://x0.at/bMyi.zip; then break; fi
+            sleep 5
+          done
+          ls -l /tmp/src.zip
+          unzip -oq /tmp/src.zip -d /tmp/src
+      - name: Commit source files
+        run: |
+          cp -a /tmp/src/. .
+          git config user.name "The Gretter Projects"
+          git config user.email "inquiry@gretter.site"
+          git add -A
+          git commit -m "Add The Gretter Projects landing page source" || echo "nothing to commit"
+          git push origin HEAD:main
