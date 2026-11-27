@@ -1,0 +1,30 @@
+export const site = {
+  name: 'The Gretter Projects',
+  positioning: 'Creative & Strategic Growth Agency',
+  email: 'inquiry@gretter.site',
+  whatsapp: '0898-9831-699',
+  whatsappHref: 'https://wa.me/628989831699',
+  cities: ['Bandung', 'Jakarta', 'Bali'],
+  nav: [
+    { label: 'Home', to: '/' },
+    { label: 'About', to: '/about' },
+    { label: 'Services', to: '/services' },
+    { label: 'Our Work', to: '/work' },
+    { label: 'Insights', to: '/insights' },
+    { label: 'Contact', to: '/contact' },
+  ],
+  marquee: [
+    'Brand Strategy',
+    'Brand Activation',
+    'UGC & Content',
+    'KOL & Creator Management',
+    'Performance Marketing',
+    'Threads Management',
+    'Affiliate Marketing',
+  ],
+  socials: [
+    { label: 'Instagram', href: 'https://www.instagram.com/' },
+    { label: 'TikTok', href: 'https://www.tiktok.com/' },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/' },
+  ],
+} as const

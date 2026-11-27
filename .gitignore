@@ -1,0 +1,7 @@
+node_modules
+dist
+.venv
+.env
+.env.local
+review
+files/.freebuff-project-files.json
