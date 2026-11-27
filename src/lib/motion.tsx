@@ -4,7 +4,6 @@ import {
   useInView,
   useReducedMotion,
   useScroll,
-  useSpring,
   useTransform,
   type Variants,
 } from 'framer-motion'
@@ -15,7 +14,20 @@ import {
  */
 export const EASE = [0.22, 1, 0.36, 1] as const
 export const DURATION = { micro: 0.3, base: 0.62, slow: 0.8 } as const
-export const VIEWPORT = { once: true, margin: '-12% 0px -10% 0px' } as const
+/*
+ * The trigger band sits deeper in the viewport than it used to (-22% off the
+ * bottom edge). On desktop several sections share the screen, so a shallower
+ * band fired them all in the same instant and they finished before the eye
+ * arrived. Waiting until a section is properly inside the viewport lets them
+ * arrive one after another.
+ *
+ * The top margin stays loose: elements that are already near the top of the
+ * document on first paint must still be able to trigger.
+ */
+export const VIEWPORT = { once: true, margin: '-12% 0px -22% 0px' } as const
+
+/** For blocks that sit at the very end of the document, which can never scroll deeper. */
+export const VIEWPORT_TAIL = { once: true, margin: '-8% 0px -2% 0px' } as const
 
 /* ------------------------------------------------------------------ */
 /* Fade + lift                                                         */
@@ -27,12 +39,14 @@ export function Reveal({
   delay = 0,
   y = 24,
   duration = DURATION.slow,
+  viewport = VIEWPORT,
 }: {
   children: ReactNode
   className?: string
   delay?: number
   y?: number
   duration?: number
+  viewport?: { once?: boolean; margin?: string }
 }) {
   const reduce = useReducedMotion()
   if (reduce) return <div className={className}>{children}</div>
@@ -41,7 +55,7 @@ export function Reveal({
       className={className}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={VIEWPORT}
+      viewport={viewport}
       transition={{ duration, delay, ease: EASE }}
     >
       {children}
@@ -55,7 +69,7 @@ export function Reveal({
 
 const groupVariants: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.06 } },
 }
 
 const itemVariants: Variants = {
@@ -92,7 +106,7 @@ export function Stagger({
       variants={variants}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, margin: '-8% 0px' }}
+      viewport={{ once: true, margin: '-8% 0px -22% 0px' }}
     >
       {children}
     </List>
@@ -186,7 +200,7 @@ export function AnimatedLinesInView({
               className="block will-change-transform"
               initial={{ y: '112%' }}
               whileInView={{ y: '0%' }}
-              viewport={{ once: true, margin: '-12% 0px' }}
+              viewport={{ once: true, margin: '-12% 0px -22% 0px' }}
               transition={{ duration: 0.8, delay: delay + index * 0.075, ease: EASE }}
             >
               {line}
@@ -221,7 +235,7 @@ export function RuleReveal({
       style={{ originX: origin === 'right' ? 1 : origin === 'center' ? 0.5 : 0, display: 'block' }}
       initial={reduce ? undefined : { scaleX: 0 }}
       whileInView={reduce ? undefined : { scaleX: 1 }}
-      viewport={{ once: true, margin: '-10% 0px' }}
+      viewport={{ once: true, margin: '-10% 0px -20% 0px' }}
       transition={{ duration: 0.85, delay, ease: EASE }}
     />
   )
@@ -246,7 +260,7 @@ export function MaskReveal({
       className={className}
       initial={{ clipPath: 'inset(0% 0% 100% 0%)', opacity: 0.4, y }}
       whileInView={{ clipPath: 'inset(0% 0% 0% 0%)', opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-10% 0px' }}
+      viewport={{ once: true, margin: '-10% 0px -20% 0px' }}
       transition={{ duration: DURATION.slow, delay, ease: EASE }}
     >
       {children}
@@ -346,11 +360,18 @@ export function CountUp({
 /* Parallax (desktop only)                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Parallax is capped and driven directly by scroll progress.
+ * The cap keeps it reading as depth instead of the page sliding underneath the
+ * cursor, and removing the spring drops a per-frame physics update on desktop.
+ */
+export const MAX_PARALLAX = 14
+
 /** Live scroll offsets, kept to desktop where they read as depth, never as noise. */
 export function Parallax({
   children,
   className,
-  distance = 36,
+  distance = MAX_PARALLAX,
 }: {
   children: ReactNode
   className?: string
@@ -370,8 +391,8 @@ export function Parallax({
   }, [])
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const raw = useTransform(scrollYProgress, [0, 1], [distance, -distance])
-  const y = useSpring(raw, { stiffness: 70, damping: 22, mass: 0.6 })
+  const offset = Math.min(Math.abs(distance), MAX_PARALLAX)
+  const y = useTransform(scrollYProgress, [0, 1], [offset, -offset])
 
   if (!enabled || reduce) {
     return (

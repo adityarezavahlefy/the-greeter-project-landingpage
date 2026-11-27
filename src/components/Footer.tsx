@@ -5,7 +5,7 @@ import { site } from '../data/site'
 import { services } from '../data/services'
 import { CtaLink, Eyebrow } from './ui'
 import { Logo } from './Logo'
-import { Reveal } from '../lib/motion'
+import { Reveal, VIEWPORT_TAIL } from '../lib/motion'
 
 function Column({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -89,7 +89,7 @@ export function Footer() {
           </Reveal>
         </div>
 
-        <Reveal className="mt-14 border-t border-white/10 pt-6" y={12}>
+        <Reveal className="mt-14 border-t border-white/10 pt-6" y={12} viewport={VIEWPORT_TAIL}>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <p className="label text-white/60">
               &copy; {year} {site.name}
