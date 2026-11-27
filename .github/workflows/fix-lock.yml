@@ -1,0 +1,36 @@
+name: fix-lock
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Fix unsatisfiable dependency range
+        run: |
+          set -e
+          sed -i 's|"@types/react-dom": "\^18.3.9"|"@types/react-dom": "^18.3.7"|' package.json
+          grep '@types/react-dom' package.json
+      - name: Regenerate lockfile
+        run: npm install --package-lock-only --no-audit --no-fund
+      - name: Install and build
+        run: |
+          set -e
+          npm ci --no-audit --no-fund
+          npm run build
+          ls dist
+      - name: Commit lockfile
+        run: |
+          set -e
+          git config user.name "The Gretter Projects"
+          git config user.email "inquiry@gretter.site"
+          git add package.json package-lock.json
+          git commit -m "Fix @types/react-dom version range so installs succeed"
+          git push origin HEAD:main
